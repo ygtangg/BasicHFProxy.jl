@@ -72,7 +72,7 @@ function bhfp_jacc(inputfile = get_input_filename_from_args();
     schwarz = JACC.Array(schwarz)
 
     JACC.parallel_for(nnnn, 
-        _jacc_kernel_threaded_atomix!, 
+        _jacc_kernel!, 
         fock, schwarz, ngauss, xpnt, coef, geom, dens)
 
     # trace Fock with the density, print the 2e- energy
@@ -91,7 +91,7 @@ function bhfp_jacc(inputfile = get_input_filename_from_args();
 end
 
 # function _kernel_threaded_atomix!(fock, schwarz, nnnn, ngauss, xpnt, coef, geom, dens)
-function _jacc_kernel_threaded_atomix!(ijkl, fock, schwarz, ngauss, xpnt, coef, geom, dens)
+function _jacc_kernel!(ijkl, fock, schwarz, ngauss, xpnt, coef, geom, dens)
     # The following loop (expanded to four indices, with permutational
     # symmetry) represents the kernel of Hartree-Fock calculations.
     # Integrals are screened to avoid small terms.
@@ -186,12 +186,14 @@ function _jacc_kernel_threaded_atomix!(ijkl, fock, schwarz, ngauss, xpnt, coef, 
         if (i == k && j == l)
             eri = eri * 0.5
         end
+
         JACC.@atomic fock[i, j] += dens[k, l] * eri * 4.0
         JACC.@atomic fock[k, l] += dens[i, j] * eri * 4.0
-        JACC.@atomic fock[i, k] -= dens[j, l] * eri
-        JACC.@atomic fock[i, l] -= dens[j, k] * eri
-        JACC.@atomic fock[j, k] -= dens[i, l] * eri
-        JACC.@atomic fock[j, l] -= dens[i, k] * eri
+        JACC.@atomic fock[i, k] += dens[j, l] * eri * -1
+        JACC.@atomic fock[i, l] += dens[j, k] * eri * -1
+        JACC.@atomic fock[j, k] += dens[i, l] * eri * -1
+        JACC.@atomic fock[j, l] += dens[i, k] * eri * -1
+
     end
     # display(fock)
 end
