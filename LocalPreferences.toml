@@ -1,2 +1,0 @@
-[BasicHFProxy]
-backend = "jacc-threads"

@@ -186,12 +186,14 @@ function _jacc_kernel_threaded_atomix!(ijkl, fock, schwarz, ngauss, xpnt, coef, 
         if (i == k && j == l)
             eri = eri * 0.5
         end
+
         JACC.@atomic fock[i, j] += dens[k, l] * eri * 4.0
         JACC.@atomic fock[k, l] += dens[i, j] * eri * 4.0
-        JACC.@atomic fock[i, k] -= dens[j, l] * eri
-        JACC.@atomic fock[i, l] -= dens[j, k] * eri
-        JACC.@atomic fock[j, k] -= dens[i, l] * eri
-        JACC.@atomic fock[j, l] -= dens[i, k] * eri
+        JACC.@atomic fock[i, k] += dens[j, l] * eri * -1
+        JACC.@atomic fock[i, l] += dens[j, k] * eri * -1
+        JACC.@atomic fock[j, k] += dens[i, l] * eri * -1
+        JACC.@atomic fock[j, l] += dens[i, k] * eri * -1
+
     end
     # display(fock)
 end
